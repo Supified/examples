@@ -1,0 +1,53 @@
+using System;
+using System.Net;
+using System.IO;
+using System.Collections.Specialized;
+
+namespace telogapi
+{
+    class Program
+    {
+        public class CookieAwareWebClient : WebClient
+        {
+            private CookieContainer cookie = new CookieContainer();
+
+            protected override WebRequest GetWebRequest(Uri address)
+            {
+                WebRequest request = base.GetWebRequest(address);
+                if (request is HttpWebRequest)
+                {
+                    (request as HttpWebRequest).CookieContainer = cookie;
+                }
+                return request;
+            }
+        }
+
+      
+        static void Main(string[] args)
+        {
+
+
+
+            try
+            {
+                var client = new CookieAwareWebClient();
+                client.BaseAddress = @"https://telogapi.a2gov.org/Account/Login?ReturnUrl=%2F";
+                var loginData = new NameValueCollection();
+                loginData.Add("login", "username");
+                loginData.Add("password", "password");
+                client.UploadValues("/Account/Login?ReturnUrl=%2F", "POST", loginData);
+
+                //Now you are logged in and can request pages    
+                string htmlSource = client.DownloadString("index.php");
+            }
+            catch (WebException e)
+            {
+                var pageContent = new StreamReader(e.Response.GetResponseStream())
+                                         .ReadToEnd();
+            }
+        }
+
+    }
+
+
+    }
